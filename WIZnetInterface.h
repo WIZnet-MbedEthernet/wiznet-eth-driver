@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * @file    W5500Interface.h
-  * @author  Bongjun Hur (modified version from Sergei G (https://os.mbed.com/users/sgnezdov/))
-  * @brief   Header file of the NetworkStack for the W5500 Device
+  * @file    WIZnetInterface.h
+  * @author  Justin Kim (modified version from Sergei G (https://os.mbed.com/users/sgnezdov/))
+  * @brief   Header file of the NetworkStack for the WIZnet Ethernet Device
   ******************************************************************************
   * @attention
   *
@@ -13,15 +13,15 @@
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
-  * <h2><center>&copy; COPYRIGHT 2017,2018 WIZnet Co.,Ltd.</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2019 WIZnet Co.,Ltd.</center></h2>
   ******************************************************************************
   */
 
-#ifndef W5500_INTERFACE_H
-#define W5500_INTERFACE_H
+#ifndef WIZNET_INTERFACE_H
+#define WIZNET_INTERFACE_H
 
 #include "mbed.h"
-#include "W5500.h"
+#include "wiznet.h"
 #include "rtos.h"
 #include "PinNames.h"
 #include "DHCPClient.h"
@@ -47,11 +47,11 @@
 //#endif
 
 
-/** w5500_socket struct
- *  W5500 socket 
+/** wiznet_socket struct
+ *  Wiznet socket 
  */
  
-struct w5500_socket {
+struct wiznet_socket {
    int   fd;
    nsapi_protocol_t proto;
    bool  connected;
@@ -321,8 +321,8 @@ private:
     void event();
     
     //w5500 socket management
-    struct w5500_socket w5500_sockets[MAX_SOCK_NUM];
-    w5500_socket* get_sock(int fd);
+    struct wiznet_socket w5500_sockets[MAX_SOCK_NUM];
+    wiznet_socket* get_sock(int fd);
     void init_socks();
 
 	DHCPClient dhcp;

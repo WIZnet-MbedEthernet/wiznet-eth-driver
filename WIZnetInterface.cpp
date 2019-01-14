@@ -1,9 +1,8 @@
-
 /**
   ******************************************************************************
-  * @file    W5500Interface.h
-  * @author  Bongjun Hur (modified version from Sergei G (https://os.mbed.com/users/sgnezdov/))
-  * @brief   Implementation file of the NetworkStack for the W5500 Device
+  * @file    WIZnetInterface.h
+  * @author  Justin Kim (modified version from Sergei G (https://os.mbed.com/users/sgnezdov/))
+  * @brief   Implementation file of the NetworkStack for the WIZnet Ethernet Device
   ******************************************************************************
   * @attention
   *
@@ -14,17 +13,17 @@
   * FROM THE CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE
   * CODING INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
   *
-  * <h2><center>&copy; COPYRIGHT 2017 WIZnet Co.,Ltd.</center></h2>
+  * <h2><center>&copy; COPYRIGHT 2019 WIZnet Co.,Ltd.</center></h2>
   ******************************************************************************
   */
 
 #include "mbed.h"
-#include "W5500Interface.h"
+#include "WIZnetInterface.h"
 
 static uint8_t W5500_DEFAULT_TESTMAC[6] = {0x00, 0x08, 0xdc, 0x19, 0x85, 0xa8};
 static int udp_local_port = 0;
 
-#define SKT(h) ((w5500_socket*)h)
+#define SKT(h) ((wiznet_socket*)h)
 #define w5500_WAIT_TIMEOUT   400
 #define w5500_ACCEPT_TIMEOUT 300000 //5 mins timeout, retrun NSAPI_ERROR_WOULD_BLOCK if there is no connection during 5 mins
 
@@ -64,16 +63,16 @@ W5500Interface::W5500Interface(SPI* spi, PinName cs, PinName reset) :
 }
 */
 
-w5500_socket* W5500Interface::get_sock(int fd)
+wiznet_socket* W5500Interface::get_sock(int fd)
 {
     for (int i=0; i<MAX_SOCK_NUM ; i++) {
-        if (w5500_sockets[i].fd == -1) {
-            w5500_sockets[i].fd            = fd;
-            w5500_sockets[i].proto         = NSAPI_TCP;
-            w5500_sockets[i].connected     = false;
-            w5500_sockets[i].callback      = NULL;
-            w5500_sockets[i].callback_data = NULL;
-            return &w5500_sockets[i];
+        if (wiznet_sockets[i].fd == -1) {
+            wiznet_sockets[i].fd            = fd;
+            wiznet_sockets[i].proto         = NSAPI_TCP;
+            wiznet_sockets[i].connected     = false;
+            wiznet_sockets[i].callback      = NULL;
+            wiznet_sockets[i].callback_data = NULL;
+            return &wiznet_sockets[i];
         }
     }
     return NULL;
@@ -82,11 +81,11 @@ w5500_socket* W5500Interface::get_sock(int fd)
 void W5500Interface::init_socks()
 {
     for (int i=0; i<MAX_SOCK_NUM ; i++) {
-        w5500_sockets[i].fd            = -1;
-        w5500_sockets[i].proto         = NSAPI_TCP;
-        w5500_sockets[i].connected     = false;
-        w5500_sockets[i].callback      = NULL;
-        w5500_sockets[i].callback_data = NULL;
+        wiznet_sockets[i].fd            = -1;
+        wiznet_sockets[i].proto         = NSAPI_TCP;
+        wiznet_sockets[i].connected     = false;
+        wiznet_sockets[i].callback      = NULL;
+        wiznet_sockets[i].callback_data = NULL;
     }
 
     dns.setup(get_stack());
@@ -182,11 +181,11 @@ void W5500Interface::socket_check_read()
         for (int i = 0; i < MAX_SOCK_NUM; i++) {
             _mutex.lock();
                 for (int i=0; i<MAX_SOCK_NUM ; i++) {
-                    if (w5500_sockets[i].fd >= 0 && w5500_sockets[i].callback) {
-                    	int size = _w5500.sreg<uint16_t>(w5500_sockets[i].fd, Sn_RX_RSR);
+                    if (wiznet_sockets[i].fd >= 0 && wiznet_sockets[i].callback) {
+                    	int size = _w5500.sreg<uint16_t>(wiznet_sockets[i].fd, Sn_RX_RSR);
                         if (size > 0) {
                             //led1 = !led1;
-                            w5500_sockets[i].callback(w5500_sockets[i].callback_data);
+                            wiznet_sockets[i].callback(wiznet_sockets[i].callback_data);
                         }
                     }
             }
@@ -287,7 +286,7 @@ nsapi_error_t W5500Interface::socket_open(nsapi_socket_t *handle, nsapi_protocol
         return NSAPI_ERROR_NO_SOCKET;
     }
 
-    w5500_socket *h = get_sock(sock_fd);
+    wiznet_socket *h = get_sock(sock_fd);
 
     if (!h) {
         return NSAPI_ERROR_NO_SOCKET;
@@ -706,19 +705,19 @@ void W5500Interface::socket_attach(void *handle, void (*callback)(void *), void 
 
     if (handle == NULL) return;
     _mutex.lock();
-    w5500_socket *socket = (w5500_socket *)handle;
-    w5500_sockets[socket->fd].callback = callback;
+    wiznet_socket *socket = (wiznet_socket *)handle;
+    wiznet_sockets[socket->fd].callback = callback;
 
 
-    w5500_sockets[socket->fd].callback_data = data;
+    wiznet_sockets[socket->fd].callback_data = data;
     _mutex.unlock();
 }
 
 void W5500Interface::event()
 {
     for(int i=0; i<MAX_SOCK_NUM; i++){
-        if (w5500_sockets[i].callback) {
-            w5500_sockets[i].callback(w5500_sockets[i].callback_data);
+        if (wiznet_sockets[i].callback) {
+            wiznet_sockets[i].callback(wiznet_sockets[i].callback_data);
         }
     }
 }
