@@ -197,13 +197,10 @@ int DHCPClient::setup(NetworkStack *ns, uint8_t mac_addr[6], int timeout_ms)
     while(!exit_flag) {
         switch(seq) {
             case 0:
-            {
                 m_retry = 0;
                 seq++;
                 break;
-            }
             case 1:
-            {
                 send_size = discover();
                 nsapi_size_or_error_t err2 = udp_sock.sendto(m_server, (char*)m_buf, send_size);
                 if (err2 < 0) {
@@ -214,9 +211,7 @@ int DHCPClient::setup(NetworkStack *ns, uint8_t mac_addr[6], int timeout_ms)
                 m_interval.start();
                 seq++;
                 break;
-            }
             case 2:
-            {
                 callback();
                 if (m_interval.read_ms() > interval_ms) {
                     DBG("m_retry: %d\n", m_retry);
@@ -227,7 +222,6 @@ int DHCPClient::setup(NetworkStack *ns, uint8_t mac_addr[6], int timeout_ms)
                     seq--;
                 }
                 break;
-            }
         }
     }
     DBG("m_retry: %d, m_interval: %d\n", m_retry, m_interval.read_ms());

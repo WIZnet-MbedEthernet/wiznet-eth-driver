@@ -25,7 +25,7 @@
 #define DBG_SPI 0
 
 #if !defined(MBED_CONF_W5500_SPI_SPEED)
-#define MBED_CONF_W5500_SPI_SPEED   18000000
+#define MBED_CONF_W5500_SPI_SPEED   100000
 #endif
 
 
@@ -34,26 +34,14 @@ WIZnet_Chip* WIZnet_Chip::inst;
 WIZnet_Chip::WIZnet_Chip(PinName mosi, PinName miso, PinName sclk, PinName _cs, PinName _reset):
     cs(_cs), reset_pin(_reset)
 {
-	connected_reset_pin = false;
-	spi = new SPI(mosi, miso, sclk);
+    spi = new SPI(mosi, miso, sclk);
     DBG("SPI interface init...\n");
-    spi->format(8, 0);
+    spi->format(32, 0);
     spi->frequency(MBED_CONF_W5500_SPI_SPEED);
-
-    if (_cs != NC){
-    	cs = 1;
-    }
-    else{
-    	DBG("CS pin is necessary. So You have to set CS pin name\n");
-    }
-
-    if (_reset != NC)
-    {
-    	reset_pin = 1;
-    	connected_reset_pin = true;
-    }
-
+    cs = 1;
+    reset_pin = 1;
     inst = this;
+    dhcp = false;
 }
 
 /*
@@ -64,6 +52,7 @@ WIZnet_Chip::WIZnet_Chip(SPI* spi, PinName _cs, PinName _reset):
     cs = 1;
     reset_pin = 1;
     inst = this;
+    dhcp = false;
 }
 */
 
@@ -127,6 +116,25 @@ bool WIZnet_Chip::connect(int socket, const char * host, int port, int timeout_m
     return true;
 }
 
+bool WIZnet_Chip::gethostbyname(const char* host, uint32_t* ip)
+{
+#if 0
+    uint32_t addr = str_to_ip(host);
+    char buf[17];
+    snprintf(buf, sizeof(buf), "%d.%d.%d.%d", (addr>>24)&0xff, (addr>>16)&0xff, (addr>>8)&0xff, addr&0xff);
+    if (strcmp(buf, host) == 0) {
+        *ip = addr;
+        return true;
+    }
+    DNSClient client;
+    if(client.lookup(host)) {
+        *ip = client.ip;
+        return true;
+    }
+#endif
+    return false;
+}
+
 bool WIZnet_Chip::disconnect()
 {
     return true;
@@ -147,12 +155,10 @@ bool WIZnet_Chip::is_connected(int socket)
 void WIZnet_Chip::reset()
 {
 //    reset_pin = 1;
-    if(connected_reset_pin){
-        reset_pin = 0;
-        wait_us(500); // 500us (w5500)
-        reset_pin = 1;
-        wait_ms(400); // 400ms (w5500)
-    }
+    reset_pin = 0;
+    wait_us(500); // 500us (w5500)
+    reset_pin = 1;
+    wait_ms(400); // 400ms (w5500)
 
 #if defined(USE_WIZ550IO_MAC)
     //reg_rd_mac(SHAR, mac); // read the MAC address inside the module
@@ -395,7 +401,23 @@ void WIZnet_Chip::spi_read(uint16_t addr, uint8_t cb, uint8_t *buf, uint16_t len
 #endif
     spi->unlock();
 }
-/*
+
+uint32_t str_to_ip(const char* str)
+{
+    uint32_t ip = 0;
+    char* p = (char*)str;
+    for(int i = 0; i < 4; i++) {
+        ip |= atoi(p);
+        p = strchr(p, '.');
+        if (p == NULL) {
+            break;
+        }
+        ip <<= 8;
+        p++;
+    }
+    return ip;
+}
+
 void printfBytes(char* str, uint8_t* buf, int len)
 {
     printf("%s %d:", str, len);
@@ -432,5 +454,5 @@ void debug_hex(uint8_t* buf, int len)
     }
     debug("\n");
 }
-*/
+
 #endif

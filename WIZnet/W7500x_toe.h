@@ -68,8 +68,6 @@ enum PHYMode {
 
 //bool plink(int wait_time_ms= 3*1000);
 
-class WIZnet_Chip {
-public:
 enum Protocol {
     CLOSED = 0,
     TCP    = 1,
@@ -112,6 +110,9 @@ enum Mode {
     MR_FARP          = 0x02,   
 };
 
+class WIZnet_Chip {
+public:
+
     WIZnet_Chip();
 
     /*
@@ -119,15 +120,21 @@ enum Mode {
     *
     * @return true if connected, false otherwise
     */ 
-    bool setmac(uint8_t *mac);
+    bool setmac();
 
     /*
     * Connect the W7500 WZTOE to the ssid contained in the constructor.
     *
     * @return true if connected, false otherwise
     */ 
-    bool setip(uint32_t ip);
+    bool setip();
 
+    /*
+    * Disconnect the connection
+    *
+    * @ returns true 
+    */
+    bool disconnect();
 
     /*
     * Open a tcp connection with the specified host on the specified port
@@ -147,9 +154,16 @@ enum Mode {
     bool setProtocol(int socket, Protocol p);
 
     /*
+    * Set local port number
+    *
+    * @return true if connected, false otherwise
+    */ 
+	bool setLocalPort(int socket, uint16_t port);
+
+    /*
     * Reset the W7500 WZTOE
     */
-    void reset(uint8_t *mac);
+    void reset();
    
     int wait_readable(int socket, int wait_time_ms, int req_size = 0);
 
@@ -182,6 +196,15 @@ enum Mode {
     * @ returns true if successful
     */
     bool close(int socket);
+    
+    /*
+    * Check if status of socket is closed.
+    *
+    * Used by automatically open socket (bind to local address).
+    *
+    * @ returns true if socket is closed.
+    */
+    bool is_closed(int socket);
 
     /*
     * @param str string to be sent
@@ -273,14 +296,14 @@ enum Mode {
     
     void ethernet_set_link(int speed, int duplex);
 
-
-protected:
-    //uint8_t mac[6];
-    //uint32_t ip;
+    uint8_t mac[6];
+    uint32_t ip;
     uint32_t netmask;
     uint32_t gateway;
     uint32_t dnsaddr;
     bool dhcp;
+
+protected:
 
     static WIZnet_Chip* inst;
 
@@ -292,6 +315,8 @@ protected:
         *(volatile uint8_t *)(W7500x_WZTOE_BASE + (uint32_t)(addr+7)) = data[4] ;
         *(volatile uint8_t *)(W7500x_WZTOE_BASE + (uint32_t)(addr+6)) = data[5] ;
     }
+
+    bool connected_reset_pin;
 };
 
 extern uint32_t str_to_ip(const char* str);

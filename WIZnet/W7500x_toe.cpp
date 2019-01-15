@@ -14,7 +14,7 @@
  * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "eth_arch.h"
+#include "wiznet.h"
 #if defined(TARGET_WIZwiki_W7500) || defined(TARGET_WIZwiki_W7500P) || defined(TARGET_WIZwiki_W7500ECO)
 
 
@@ -80,14 +80,14 @@ WIZnet_Chip::WIZnet_Chip()
     inst = this;
 }
 
-bool WIZnet_Chip::setmac(uint8_t *mac)
+bool WIZnet_Chip::setmac()
 {
     reg_wr_mac(SHAR, mac);
     return true;
 }
 
 // Set the IP
-bool WIZnet_Chip::setip(uint32_t ip)
+bool WIZnet_Chip::setip()
 {
     reg_wr<uint32_t>(SIPR, ip);
     reg_wr<uint32_t>(GAR, gateway);
@@ -101,6 +101,15 @@ bool WIZnet_Chip::setProtocol(int socket, Protocol p)
         return false;
     }
     sreg<uint8_t>(socket, Sn_MR, p);
+    return true;
+}
+
+bool WIZnet_Chip::setLocalPort(int socket, uint16_t port)
+{
+    if (socket < 0) {
+        return false;
+    }
+    sreg<uint16_t>(socket, Sn_PORT, port);
     return true;
 }
 
@@ -119,10 +128,15 @@ bool WIZnet_Chip::connect(int socket, const char * host, int port, int timeout_m
     t.reset();
     t.start();
     while(!is_connected(socket)) {
-        if (t.read_ms() > timeout_ms) {
+        if ((timeout_ms) && (t.read_ms() > timeout_ms)) {
             return false;
         }
     }
+    return true;
+}
+
+bool WIZnet_Chip::disconnect()
+{
     return true;
 }
 
@@ -147,7 +161,6 @@ bool WIZnet_Chip::gethostbyname(const char* host, uint32_t* ip)
     return false;
 }
 
-
 bool WIZnet_Chip::is_connected(int socket)
 {
     /*
@@ -164,7 +177,7 @@ bool WIZnet_Chip::is_connected(int socket)
     return false;
 }
 // Reset the chip & set the buffer
-void WIZnet_Chip::reset(uint8_t *mac)
+void WIZnet_Chip::reset()
 {
     /* S/W Reset PHY */
     mdio_write(GPIO_MDC, PHYREG_CONTROL, 0x8000);
@@ -221,6 +234,14 @@ bool WIZnet_Chip::close(int socket)
     // clear Socket Interrupt Register
     sreg<uint8_t>(socket, Sn_ICR, 0xff);
     return true;
+}
+
+bool WIZnet_Chip::is_closed(int socket)
+{
+    if (sreg<uint8_t>(socket, Sn_SR) == SOCK_CLOSED) {
+        return true;
+    }
+    return false;
 }
 
 int WIZnet_Chip::wait_readable(int socket, int wait_time_ms, int req_size)

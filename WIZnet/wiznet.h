@@ -23,6 +23,8 @@
 #else
 #include "W5500.h"
 
+#endif
+
 /*
 // current library do not support next chips.
 

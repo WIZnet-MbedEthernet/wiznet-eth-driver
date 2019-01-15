@@ -63,12 +63,15 @@ struct wiznet_socket {
  *  Implementation of the NetworkStack for the W5500
  */
 
-class W5500Interface : public NetworkStack, public EthInterface
+class WIZnetInterface : public NetworkStack, public EthInterface
 {
 public:
+
+#if (not defined TARGET_WIZwiki_W7500) && (not defined TARGET_WIZwiki_W7500P) && (not defined TARGET_WIZwiki_W7500ECO)
     //W5500Interface(SPI* spi, PinName cs, PinName reset);
-    W5500Interface(PinName mosi, PinName miso, PinName sclk, PinName cs, PinName reset);
-    
+    WIZnetInterface(PinName mosi, PinName miso, PinName sclk, PinName cs, PinName reset);
+#endif
+
     int init();
     int init(uint8_t * mac);
     int init(const char* ip, const char* mask, const char* gateway);
@@ -304,7 +307,7 @@ protected:
     virtual NetworkStack* get_stack() {return this;}
 
 private:
-	WIZnet_Chip _w5500;
+	WIZnet_Chip _wiznet;
 
 	Mutex _mutex;
 	Thread thread_read_socket;
@@ -320,8 +323,8 @@ private:
     //void signal_event(nsapi_socket_t handle);
     void event();
     
-    //w5500 socket management
-    struct wiznet_socket w5500_sockets[MAX_SOCK_NUM];
+    //wiznet socket management
+    struct wiznet_socket wiznet_sockets[MAX_SOCK_NUM];
     wiznet_socket* get_sock(int fd);
     void init_socks();
 

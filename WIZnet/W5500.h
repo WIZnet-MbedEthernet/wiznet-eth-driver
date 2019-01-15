@@ -174,6 +174,17 @@ public:
 
     int recv(int socket, char* buf, int len);
 
+    /*
+    * Return true if the module is using dhcp
+    *
+    * @returns true if the module is using dhcp
+    */
+    bool isDHCP() {
+        return dhcp;
+    }
+
+    bool gethostbyname(const char* host, uint32_t* ip);
+
     static WIZnet_Chip * getInstance() {
         return inst;
     };
@@ -267,13 +278,9 @@ protected:
     SPI* spi;
     DigitalOut cs;
     DigitalOut reset_pin;
-
-    bool connected_reset_pin;
 };
 
-/*
 extern uint32_t str_to_ip(const char* str);
 extern void printfBytes(char* str, uint8_t* buf, int len);
 extern void printHex(uint8_t* buf, int len);
 extern void debug_hex(uint8_t* buf, int len);
-*/
