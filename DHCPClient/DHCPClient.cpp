@@ -35,7 +35,7 @@ int DHCPClient::discover()
     const uint8_t options[] = {0x63,0x82,0x53,0x63, // magic cookie
                                53,1,DHCPDISCOVER,   // DHCP option 53: DHCP Discover
                                55,4,1,3,15,6,
-                               255}; 
+                               255};
     add_buf((uint8_t*)options, sizeof(options));
     return m_pos;
 }
@@ -63,8 +63,8 @@ int DHCPClient::request()
 }
 
 int DHCPClient::offer(uint8_t buf[], int size) {
-    memcpy(yiaddr, buf+DHCP_OFFSET_YIADDR, 4);   
-    memcpy(siaddr, buf+DHCP_OFFSET_SIADDR, 4);   
+    memcpy(yiaddr, buf+DHCP_OFFSET_YIADDR, 4);
+    memcpy(siaddr, buf+DHCP_OFFSET_SIADDR, 4);
     uint8_t *p;
     int msg_type = -1;
     p = buf + DHCP_OFFSET_OPTIONS;
@@ -74,7 +74,7 @@ int DHCPClient::offer(uint8_t buf[], int size) {
             continue;
         }
         int len = *p++;
- 
+
         DBG("DHCP option: %d\r\n", code);
         DBG_HEX(p, len);
 
@@ -87,11 +87,11 @@ int DHCPClient::offer(uint8_t buf[], int size) {
                 break;
             case 3:
                 memcpy(gateway, p, 4); // Gateway IP address
-                break; 
+                break;
             case 6:  // DNS server
                 memcpy(dnsaddr, p, 4);
                 break;
-            case 51: // IP lease time 
+            case 51: // IP lease time
                 break;
             case 54: // DHCP server
                 memcpy(siaddr, p, 4);
@@ -166,12 +166,12 @@ void  DHCPClient::add_option(uint8_t code, uint8_t* buf, int len)
 int DHCPClient::setup(NetworkStack *ns, uint8_t mac_addr[6], int timeout_ms)
 {
     memcpy(chaddr, mac_addr, 6);
-    
+
     int interval_ms = 5*1000; // 5000msec
     if (timeout_ms < interval_ms) {
         interval_ms = timeout_ms;
     }
-    
+
     UDPSocket udp_sock;
     m_udp = &udp_sock;
     {
@@ -187,7 +187,7 @@ int DHCPClient::setup(NetworkStack *ns, uint8_t mac_addr[6], int timeout_ms)
             return err;
         }
     }
-    
+
     m_server.set_ip_address("255.255.255.255"); // DHCP broadcast
     m_server.set_port(67);                      // DHCP broadcast
     exit_flag = false;
@@ -201,6 +201,7 @@ int DHCPClient::setup(NetworkStack *ns, uint8_t mac_addr[6], int timeout_ms)
                 seq++;
                 break;
             case 1:
+              {
                 send_size = discover();
                 nsapi_size_or_error_t err2 = udp_sock.sendto(m_server, (char*)m_buf, send_size);
                 if (err2 < 0) {
@@ -211,6 +212,7 @@ int DHCPClient::setup(NetworkStack *ns, uint8_t mac_addr[6], int timeout_ms)
                 m_interval.start();
                 seq++;
                 break;
+              }
             case 2:
                 callback();
                 if (m_interval.read_ms() > interval_ms) {
