@@ -294,7 +294,7 @@ int WIZnet_Chip::send(int socket, const void * str, int len)
     uint32_t sn_tx_base = W7500x_TXMEM_BASE + (uint32_t)(socket<<18); 
 
     for(int i=0; i<len; i++)
-        *(volatile uint8_t *)(sn_tx_base + ((ptr+i)&0xFFFF)) = *(uint8_t *)(str+i);
+        *(volatile uint8_t *)(sn_tx_base + ((ptr+i)&0xFFFF)) = *(uint8_t *)((uint8_t *)str+i);
 
     sreg<uint16_t>(socket, Sn_TX_WR, ptr + len);
     scmd(socket, SEND);
@@ -333,7 +333,7 @@ int WIZnet_Chip::recv(int socket, void* buf, int len)
     uint32_t sn_rx_base = W7500x_RXMEM_BASE + (uint32_t)(socket<<18); 
 
     for(int i=0; i<len; i++)
-       *(uint8_t *)(buf+i) = *(volatile uint8_t *)(sn_rx_base + ((ptr+i)&0xFFFF));
+       *(uint8_t *)((uint8_t *)buf+i) = *(volatile uint8_t *)(sn_rx_base + ((ptr+i)&0xFFFF));
 
     sreg<uint16_t>(socket, Sn_RX_RD, ptr + len);
     scmd(socket, RECV);

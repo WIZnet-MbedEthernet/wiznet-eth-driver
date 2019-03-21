@@ -25,6 +25,7 @@ static int udp_local_port = 0;
 
 #define SKT(h) ((wiznet_socket*)h)
 #define WIZNET_WAIT_TIMEOUT   400
+#define WIZNET_WAIT_TIMEOUT1   1000
 #define WIZNET_ACCEPT_TIMEOUT 300000 //5 mins timeout, retrun NSAPI_ERROR_WOULD_BLOCK if there is no connection during 5 mins
 
 #define WIZNET_INTF_DBG 0
@@ -395,7 +396,7 @@ nsapi_size_or_error_t WIZnetInterface::socket_connect(nsapi_socket_t handle, con
     SKT(handle)->connected = false;
 
     //try to connect
-    if (!_wiznet.connect(SKT(handle)->fd, address.get_ip_address(), address.get_port(), WIZNET_WAIT_TIMEOUT)) {
+    if (!_wiznet.connect(SKT(handle)->fd, address.get_ip_address(), address.get_port(), WIZNET_WAIT_TIMEOUT1)) {
         _mutex.unlock();
         return -1;
     }
@@ -502,7 +503,7 @@ nsapi_size_or_error_t WIZnetInterface::socket_send(nsapi_socket_t handle, const 
         if (_size > (size-writtenLen)) {
             _size = (size-writtenLen);
         }
-        ret = _wiznet.send(SKT(handle)->fd, (char*)(data+writtenLen), (int)_size);
+        ret = _wiznet.send(SKT(handle)->fd, (char*)((uint32_t *)data+writtenLen), (int)_size);
         if (ret < 0) {
             DBG("returning error -1\n");
             _mutex.unlock();
@@ -518,7 +519,7 @@ nsapi_size_or_error_t WIZnetInterface::socket_recv(nsapi_socket_t handle, void *
 {
     int recved_size = 0;
     //int idx;
-    nsapi_size_t _size;
+    int _size;
     nsapi_size_or_error_t err;
 
     DBG("fd: %d\n", SKT(handle)->fd);
@@ -555,7 +556,7 @@ nsapi_size_or_error_t WIZnetInterface::socket_recv(nsapi_socket_t handle, void *
         }
 
 
-        err = _wiznet.recv(SKT(handle)->fd, (char*)(data + recved_size), (int)_size);
+        err = _wiznet.recv(SKT(handle)->fd, (char*)((uint32_t *)data + recved_size), (int)_size);
 //	    printf("[TEST 400] : %d\r\n",recved_size);
 //	    for(idx=0; idx<16; idx++)
 //	    {
