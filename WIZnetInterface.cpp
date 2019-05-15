@@ -31,7 +31,7 @@ static int udp_local_port = 0;
 #define WIZNET_INTF_DBG 0
 
 #if WIZNET_INTF_DBG
-#define DBG(...) do{debug("[%s:%d]", __PRETTY_FUNCTION__,__LINE__);debug(__VA_ARGS__);} while(0);
+#define DBG(...) do{debug("[%s:%d] \n", __PRETTY_FUNCTION__,__LINE__);debug(__VA_ARGS__);} while(0);
 #else
 #define DBG(...) while(0);
 #define INFO(...) do{debug("[%s:%d]", __PRETTY_FUNCTION__,__LINE__);debug(__VA_ARGS__);} while(0);
@@ -328,7 +328,7 @@ nsapi_error_t WIZnetInterface::socket_close(nsapi_socket_t handle)
 
 nsapi_error_t WIZnetInterface::socket_bind(nsapi_socket_t handle, const SocketAddress &address)
 {
-    if (handle < 0) {
+    if ((int)handle < 0) {
         return NSAPI_ERROR_DEVICE_ERROR;
     }
     DBG("fd: %d, port: %d\n", SKT(handle)->fd, address.get_port());
@@ -392,6 +392,7 @@ nsapi_size_or_error_t WIZnetInterface::socket_connect(nsapi_socket_t handle, con
         return NSAPI_ERROR_NO_SOCKET;
     }
 
+    DBG("Wiz socket_connect Addres[%s] Port: %d \n", address.get_ip_address(), address.get_port());
     //before we attempt to connect, we are not connected
     SKT(handle)->connected = false;
 
@@ -520,7 +521,7 @@ nsapi_size_or_error_t WIZnetInterface::socket_recv(nsapi_socket_t handle, void *
     int recved_size = 0;
     //int idx;
     int _size;
-    nsapi_size_or_error_t err;
+    nsapi_size_or_error_t retsize;
 
     DBG("fd: %d\n", SKT(handle)->fd);
     //INFO("fd: %d\n", SKT(handle)->fd);
@@ -528,17 +529,18 @@ nsapi_size_or_error_t WIZnetInterface::socket_recv(nsapi_socket_t handle, void *
     _mutex.lock();
     if ((SKT(handle)->fd < 0) || !SKT(handle)->connected) {
         _mutex.unlock();
-        return -1;
+        return NSAPI_ERROR_NO_CONNECTION;
     }
+
     DBG("fd: connected is %d\n", SKT(handle)->connected);
 
      while(1) {
         _size = _wiznet.wait_readable(SKT(handle)->fd, WIZNET_WAIT_TIMEOUT);
-        DBG("fd: _size %d\n", _size);
+        DBG("fd: _size %d recved_size %d\n", _size, recved_size);
 
-        if (_size < 0) {
-            if(recved_size > 0){
-                err = recved_size;
+        if (_size <= 0) {
+            if(recved_size >= 0){
+                retsize = recved_size;
                 //INFO("recved_size : %d\n",recved_size);
                 break;
             }
@@ -546,17 +548,7 @@ nsapi_size_or_error_t WIZnetInterface::socket_recv(nsapi_socket_t handle, void *
             return NSAPI_ERROR_WOULD_BLOCK;
         }
 
-        if (_size > (size - recved_size)) {
-            _size = (size - recved_size);
-        }
-
-        if (_size == 0 && recved_size !=0 ){
-            _mutex.unlock();
-            return recved_size;
-        }
-
-
-        err = _wiznet.recv(SKT(handle)->fd, (char*)((uint32_t *)data + recved_size), (int)_size);
+        retsize = _wiznet.recv(SKT(handle)->fd, (char*)((uint32_t *)data + recved_size), (int)_size);
 //	    printf("[TEST 400] : %d\r\n",recved_size);
 //	    for(idx=0; idx<16; idx++)
 //	    {
@@ -564,27 +556,27 @@ nsapi_size_or_error_t WIZnetInterface::socket_recv(nsapi_socket_t handle, void *
 //	    }
 //	    printf("\r\n");
 
-        DBG("rv: %d\n", err);
+        DBG("rv: %d\n", retsize);
         //INFO("rv: %d\n",err);
         recved_size += _size;
     }
 
 #if WIZNET_INTF_DBG
-    if (err > 0) {
+    if (retsize > 0) {
         debug("[socket_recv] buffer:");
-        for(int i = 0; i < err; i++) {
+        for(int i = 0; i < retsize; i++) {
             if ((i%16) == 0) {
                 debug("\n");
             }
             debug(" %02x", ((uint8_t*)data)[i]);
         }
-        if ((err-1%16) != 0) {
+        if ((retsize-1%16) != 0) {
             debug("\n");
         }
     }
 #endif
     _mutex.unlock();
-    return err;
+    return retsize;
 }
 
 nsapi_size_or_error_t WIZnetInterface::socket_sendto(nsapi_socket_t handle, const SocketAddress &address,
@@ -647,7 +639,13 @@ nsapi_size_or_error_t WIZnetInterface::socket_recvfrom(nsapi_socket_t handle, So
     _mutex.lock();
     uint8_t info[8];
     int len = _wiznet.wait_readable(SKT(handle)->fd, WIZNET_WAIT_TIMEOUT, sizeof(info));
-    if (len < 0) {
+     DBG("Recieve len %d \n", len);
+    if(len == 0 )
+    {
+        _mutex.unlock();
+        return 0;
+    }
+    else if (len < 0) {
         DBG("error: NSAPI_ERROR_WOULD_BLOCK\n");
         _mutex.unlock();
         return NSAPI_ERROR_WOULD_BLOCK;
@@ -726,7 +724,7 @@ void WIZnetInterface::event()
 nsapi_error_t WIZnetInterface::gethostbyname(const char *host,
         SocketAddress *address, nsapi_version_t version)
 {
-    DBG("DNS process %s", host);
+    DBG("DNS process %s \n", host);
     bool isOK = dns.lookup(host);
     if (isOK) {
         DBG("is ok\n");
