@@ -145,7 +145,7 @@ bool WIZnet_Chip::is_connected(int socket)
     uint8_t tmpSn_SR;
     tmpSn_SR = sreg<uint8_t>(socket, Sn_SR);
     // packet sending is possible, when state is SOCK_CLOSE_WAIT.
-    if ((tmpSn_SR == SOCK_ESTABLISHED_WIZ) || (tmpSn_SR == SOCK_CLOSE_WAIT_WIZ)) {
+    if ((tmpSn_SR == WIZ_SOCK_ESTABLISHED) || (tmpSn_SR == WIZ_SOCK_CLOSE_WAIT)) {
         return true;
     }
     return false;
@@ -181,7 +181,7 @@ bool WIZnet_Chip::close(int socket)
         return false;
     }
     // if not connected, return
-    if (sreg<uint8_t>(socket, Sn_SR) == SOCK_CLOSED_WIZ) {
+    if (sreg<uint8_t>(socket, Sn_SR) == WIZ_SOCK_CLOSED) {
         return true;
     }
     if (sreg<uint8_t>(socket, Sn_MR) == TCP) {
@@ -194,7 +194,7 @@ bool WIZnet_Chip::close(int socket)
 
 bool WIZnet_Chip::is_closed(int socket)
 {
-    if (sreg<uint8_t>(socket, Sn_SR) == SOCK_CLOSED_WIZ) {
+    if (sreg<uint8_t>(socket, Sn_SR) == WIZ_SOCK_CLOSED) {
         return true;
     }
     return false;
@@ -288,11 +288,11 @@ int WIZnet_Chip::send(int socket, const char * str, int len)
     while (( (tmp_Sn_IR = sreg<uint8_t>(socket, Sn_IR)) & INT_SEND_OK) != INT_SEND_OK) {
         // @Jul.10, 2014 fix contant name, and udp sendto function.
         switch (sreg<uint8_t>(socket, Sn_SR)) {
-            case SOCK_CLOSED_WIZ :
+            case WIZ_SOCK_CLOSED :
                 close(socket);
                 return 0;
                 //break;
-            case SOCK_UDP_WIZ :
+            case WIZ_SOCK_UDP :
                 // ARP timeout is possible.
                 if ((tmp_Sn_IR & INT_TIMEOUT) == INT_TIMEOUT) {
                     sreg<uint8_t>(socket, Sn_IR, INT_TIMEOUT);
@@ -324,7 +324,7 @@ int WIZnet_Chip::recv(int socket, char* buf, int len)
 int WIZnet_Chip::new_socket()
 {
     for(int s = 0; s < MAX_SOCK_NUM; s++) {
-        if (sreg<uint8_t>(s, Sn_SR) == SOCK_CLOSED_WIZ) {
+        if (sreg<uint8_t>(s, Sn_SR) == WIZ_SOCK_CLOSED) {
             return s;
         }
     }

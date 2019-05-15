@@ -41,13 +41,13 @@ enum Interrupt {
 };
 
 enum Status {
-    SOCK_CLOSED_WIZ      = 0x00,
-    SOCK_INIT_WIZ        = 0x13,
-    SOCK_LISTEN_WIZ      = 0x14,
-    SOCK_SYNSENT_WIZ     = 0x15,
-    SOCK_ESTABLISHED_WIZ = 0x17,
-    SOCK_CLOSE_WAIT_WIZ  = 0x1c,
-    SOCK_UDP_WIZ         = 0x22,
+    WIZ_SOCK_CLOSED      = 0x00,
+    WIZ_SOCK_INIT        = 0x13,
+    WIZ_SOCK_LISTEN      = 0x14,
+    WIZ_SOCK_SYNSENT     = 0x15,
+    WIZ_SOCK_ESTABLISHED = 0x17,
+    WIZ_SOCK_CLOSE_WAIT  = 0x1c,
+    WIZ_SOCK_UDP         = 0x22,
 };
 
 #define MAX_SOCK_NUM 8
