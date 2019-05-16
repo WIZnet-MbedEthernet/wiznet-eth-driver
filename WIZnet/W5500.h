@@ -5,6 +5,10 @@
 #include "mbed.h"
 #include "mbed_debug.h"
 
+#include "SPI.h"
+#include "DigitalOut.h"
+#include "PinNames.h"
+
 #define TEST_ASSERT(A) while(!(A)){debug("\n\n%s@%d %s ASSERT!\n\n",__PRETTY_FUNCTION__,__LINE__,#A);exit(1);};
 
 #define DEFAULT_WAIT_RESP_TIMEOUT 500
@@ -37,13 +41,13 @@ enum Interrupt {
 };
 
 enum Status {
-    SOCK_CLOSED      = 0x00,
-    SOCK_INIT        = 0x13,
-    SOCK_LISTEN      = 0x14,
-    SOCK_SYNSENT     = 0x15,
-    SOCK_ESTABLISHED = 0x17,
-    SOCK_CLOSE_WAIT  = 0x1c,
-    SOCK_UDP         = 0x22,
+    WIZ_SOCK_CLOSED      = 0x00,
+    WIZ_SOCK_INIT        = 0x13,
+    WIZ_SOCK_LISTEN      = 0x14,
+    WIZ_SOCK_SYNSENT     = 0x15,
+    WIZ_SOCK_ESTABLISHED = 0x17,
+    WIZ_SOCK_CLOSE_WAIT  = 0x1c,
+    WIZ_SOCK_UDP         = 0x22,
 };
 
 #define MAX_SOCK_NUM 8

@@ -28,7 +28,11 @@
 #include "DNSClient.h"
 
 #include "WiFiInterface.h"
- 
+#if defined(USE_W5500)
+#include "W5500.h"
+#include "InternetSocket.h"
+#endif
+
 // Arduino pin defaults for convenience
 //#if !defined(W5500_SPI_MOSI)
 //#define W5500_SPI_MOSI   D11
