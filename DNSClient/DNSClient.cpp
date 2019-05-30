@@ -7,7 +7,7 @@
 #include "wiznet.h"
 
 #if DBG_DNS
-#define DBG2(...) do{debug("[DNS]%p %d %s ", this,__LINE__,__PRETTY_FUNCTION__); debug(__VA_ARGS__); } while(0);
+#define DBG2(...) do{debug("[DNS]%p %d %s \n", this,__LINE__,__PRETTY_FUNCTION__); debug(__VA_ARGS__); } while(0);
 #else
 #define DBG2(...) while(0);
 #endif
@@ -218,8 +218,7 @@ bool DNSClient::lookup(const char* hostname) {
     m_hostname = hostname;
     
     uint32_t ip = isValidIP(hostname);
-
-    //check if hostname is an IP address
+   //check if hostname is an IP address
     if (ip > 0) {
         //if it is already an IP address just return immediately
         m_ip = ip;
